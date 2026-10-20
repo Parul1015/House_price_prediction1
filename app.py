@@ -16,10 +16,11 @@ st.title("🏠 Advanced House Price Prediction App")
 st.markdown("This app uses a machine learning regression model trained on the Ames Housing dataset to predict property prices in real time.")
 
 # ----------------------------------
-# 2. Load the Trained Model and Columns
+# 2. Load the Trained Pipeline and Columns
 # ----------------------------------
 @st.cache_resource
 def load_assets():
+    # Loads the full pipeline (imputer + scaler + encoder + gradient boosting model)
     model = joblib.load("house_model.pkl")
     model_columns = joblib.load("model_columns.pkl")
     return model, model_columns
@@ -56,7 +57,7 @@ if st.button("Predict Property Price", type="primary"):
     # Create a blank dataframe matching all columns the model was trained on
     input_data = pd.DataFrame(0, index=[0], columns=model_columns)
     
-    # Fill in the key user inputs
+    # Fill in the key user inputs matching your notebook's feature names
     if 'GrLivArea' in input_data.columns:
         input_data['GrLivArea'] = gr_liv_area
     if 'TotalBsmtSF' in input_data.columns:
@@ -70,10 +71,10 @@ if st.button("Predict Property Price", type="primary"):
     if 'OverallCond' in input_data.columns:
         input_data['OverallCond'] = overall_cond
 
-    # Make prediction
+    # Make prediction (returns log-transformed price because model was trained on y_log)
     prediction_log = model.predict(input_data)
     
-    # Convert log-transformed scale back to actual dollar amounts (if model was trained on log1p)
+    # Convert log-transformed scale back to actual dollar amounts using expm1
     try:
         final_price = np.expm1(prediction_log[0])
     except:
